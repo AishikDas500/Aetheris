@@ -2,7 +2,7 @@
 
 Ask every AI at once. Aetheris is a single dashboard for sending one prompt to ChatGPT, Claude, Gemini, Perplexity, Grok, DeepSeek, Groq, Mistral, and image models — side by side in a Response Matrix — with a local analytics panel tracking your own usage.
 
-**[Live demo →](#)** *(replace this with your GitHub Pages link once deployed — see below)*
+**[Live demo →](#)** https://aishikdas500.github.io/Aetheris/
 
 ---
 
