@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aetheris — Unified Intelligence Layer</title>
+<meta name="description" content="Ask every AI at once. Aetheris routes one prompt to ChatGPT, Claude, Gemini, Perplexity, DeepSeek and more, side by side, with your own API keys stored only in your browser.">
+<meta name="theme-color" content="#05040c">
+<meta property="og:title" content="Aetheris — Unified Intelligence Layer">
+<meta property="og:description" content="Ask every AI at once. One prompt, every model, compared side by side.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✦</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="cosmos"><canvas id="starCanvas"></canvas><div class="nebula-band-spin"><div class="nebula-band"></div></div></div>
+
+<button class="menu-toggle" id="menuToggle" aria-label="Toggle sidebar">☰</button>
+<button class="panel-toggle" id="panelToggle" aria-label="Toggle analytics panel">☰</button>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="panel-overlay" id="panelOverlay"></div>
+
+<!-- ═══════════ SETTINGS MODAL ═══════════ -->
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal-box">
+    <h3>API Keys &amp; Models</h3>
+    <p class="modal-note">
+      Add a key for any provider to get <strong>live answers rendered right in the Response Matrix</strong>.
+      Keys live <strong>only in this browser's local storage</strong> — never sent anywhere except the provider
+      you call directly. Leave a field blank and that tool falls back to opening a tab / copying your prompt.
+    </p>
+    <div id="settingsBody"></div>
+
+    <p class="modal-section-title">Custom endpoint (OpenRouter, Ollama, or any OpenAI-compatible API)</p>
+    <div class="custom-model-row">
+      <input type="text" id="customName" placeholder="Display name (e.g. Llama 3 local)">
+      <input type="text" id="customModelId" placeholder="Model ID (e.g. llama3)">
+      <input type="text" id="customBaseUrl" class="full" placeholder="Base URL (e.g. http://localhost:11434/v1 or https://openrouter.ai/api/v1)">
+      <input type="text" id="customKey" class="full" placeholder="API key (leave blank for local Ollama)">
+    </div>
+    <button class="btn" id="addCustomModelBtn" style="width:100%; margin-bottom: 0.4rem;">+ Add Custom Model</button>
+    <div id="customModelsList"></div>
+
+    <p class="modal-note" style="margin-top:1rem;">
+      Note: some providers (OpenAI in particular) block direct browser calls unless routed through a backend server —
+      that's a provider-side CORS restriction, not a bug here. If a call fails, the card tells you plainly and offers
+      to open that tool in a tab instead.
+    </p>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="settingsClearAll">Clear all keys</button>
+      <button class="btn" id="settingsCancel">Cancel</button>
+      <button class="btn btn-primary" id="settingsSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-shell">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand-row">
+      <img class="brand-mark" src="data:image/png;base64,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" alt="Aetheris logo">
+      <span class="brand-nebula-mark" aria-hidden="true"><span></span></span>
+      <div class="brand-text">
+        <h1>Aetheris</h1>
+        <span>Intelligence Layer</span>
+      </div>
+    </div>
+    <div class="sidebar-controls">
+      <button class="icon-btn" id="settingsToggle" title="API key settings" aria-label="Open API key settings">⚙</button>
+      <button class="icon-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">☀</button>
+    </div>
+
+    <nav class="nav-group" aria-label="Suites">
+      <button class="nav-item active" data-suite="general"><span class="ico">◆</span>General Assistant</button>
+      <button class="nav-item" data-suite="research"><span class="ico">◈</span>Deep Research</button>
+      <button class="nav-item" data-suite="coding"><span class="ico">◇</span>Advanced Coding</button>
+      <button class="nav-item" data-suite="image"><span class="ico">▣</span>Image Generation</button>
+    </nav>
+
+    <p class="sidebar-label">Local Engine</p>
+    <div class="provider-list" id="providerList"></div>
+    <button class="add-model-btn" id="sidebarAddModel">+ Add Custom Model</button>
+
+    <div class="sidebar-usage">
+      <div class="sidebar-usage-top"><span>Aetheris Usage</span><span id="usagePeriodLabel">All time</span></div>
+      <div class="sidebar-usage-num" id="sidebarTotalQueries">0</div>
+      <div class="sidebar-usage-delta" id="sidebarDelta">Total queries synced</div>
+      <canvas class="sparkline" id="sparkline"></canvas>
+    </div>
+
+    <button class="sidebar-settings-btn" id="sidebarSettingsBtn">⚙ Configure API Keys</button>
+  </aside>
+
+  <!-- ═══════════ MAIN ═══════════ -->
+  <main class="main">
+   <div class="main-inner">
+    <h1 class="hero-title" id="heroTitle">Ask Every <em>AI. At Once.</em></h1>
+    <p class="hero-sub" id="heroSub">One prompt. Every model. Smarter answers.</p>
+
+    <div class="console-card">
+      <textarea id="prompt" placeholder="Ask anything…"></textarea>
+      <div class="console-toolbar">
+        <button class="tool-chip" id="webSearchChip"><span class="mini-switch"></span> Web Search</button>
+        <button class="tool-chip" id="reasoningChip"><span class="mini-switch"></span> Reasoning mode</button>
+        <div class="toolbar-spacer"></div>
+        <button class="round-icon-btn" id="clearBtn" title="Clear prompt">⟲</button>
+        <button class="send-btn" id="sendBtn" title="Sync Pipeline" disabled>➤</button>
+      </div>
+    </div>
+
+    <div class="pill-row" id="pillRow"></div>
+
+    <div class="matrix-header">
+      <h2>Response Matrix</h2>
+      <span class="matrix-count" id="matrixCount">0 models selected</span>
+      <div class="matrix-header-spacer"></div>
+      <label class="compare-chip"><input type="checkbox" id="compareToggle" style="accent-color:var(--accent)"> Compare</label>
+      <div class="view-toggle-group">
+        <button class="view-toggle-btn active" id="gridViewBtn" title="Grid view">▦</button>
+        <button class="view-toggle-btn" id="listViewBtn" title="List view">☰</button>
+      </div>
+    </div>
+
+    <div class="matrix-grid" id="matrixGrid">
+      <p class="empty-note" style="grid-column:1/-1;">Type a prompt and hit send to populate the Response Matrix.</p>
+    </div>
+   </div>
+  </main>
+
+  <!-- ═══════════ RIGHT PANEL ═══════════ -->
+  <aside class="right-panel" id="rightPanel">
+    <div class="panel-block">
+      <div class="panel-block-head"><h3>Today's Activity</h3></div>
+      <div class="stat-grid">
+        <div class="stat-cell"><div class="stat-label">Queries</div><div class="stat-num" id="statQueries">0</div></div>
+        <div class="stat-cell"><div class="stat-label">Tokens (est.)</div><div class="stat-num" id="statTokens">0</div></div>
+        <div class="stat-cell"><div class="stat-label">Live APIs</div><div class="stat-num" id="statLiveApis">0/0</div></div>
+        <div class="stat-cell"><div class="stat-label">Avg Response</div><div class="stat-num" id="statAvgTime">—</div></div>
+      </div>
+    </div>
+
+    <div class="panel-block">
+      <div class="panel-block-head"><h3>Usage Overview</h3></div>
+      <div class="donut-wrap">
+        <div class="donut" id="donutChart"><div class="donut-center"><span class="num" id="donutTotal">0</span><span class="lbl">Queries</span></div></div>
+        <div class="legend" id="donutLegend"></div>
+      </div>
+    </div>
+
+    <div class="panel-block" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+      <div class="panel-block-head"><h3>Recent History</h3></div>
+      <div class="history-list" id="historyList" style="overflow-y:auto;">
+        <p class="empty-note">Nothing synced yet.</p>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
